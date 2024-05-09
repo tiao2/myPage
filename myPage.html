@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Tiaotiao’s Page</title>
+   <style>
+     #head {
+       position: fixed;
+       background-color: #f6f6f6;
+      top: 0px;
+      left: 30px;
+      height: 30px;
+      width: 1000px;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+           }
+    img[height='30px'] {
+       position: fixed;
+       top: 0px;
+       left: 0px;
+     }
+     .of {
+       position: fixed;
+       left: 100px;
+       top: 50px;
+      display: none;
+      background-color: #f6f6f6;
+         }
+    #i {
+     position: fixed;
+     top: 60px;
+     left: 500px;
+    overflow-x: hidden;
+     width: 450px;
+     background-color: #f6f6f6;
+    display: none;
+       }
+   #output {
+      position: absolute;
+      top: 30px;
+      left: 300px;
+  </style>
+</head>
+<body>
+    <img height='30px' width='30px' src="http://physics-static-cn.turtlesim.com/users/avatars/6260/04/2f/f3d2fc0d1926d63c/5.jpg"/>
+    <div id='head'><strong style='font-size: 30px;'>Tiaotiao’s Page</strong>&nbsp;<a href='javascript:website()'>Websites</a>&nbsp;<a href='javascript:ap()'>My active places</a>&nbsp;<a href='javascript:location.reload()'>Reload</a>&nbsp;<a href='javascript:ju()'>Join us</a>&nbsp;Our QQ group: 797047258&nbsp;<a href='javascript:navigator.clipboard.writeText("797047258")'>Copy</a></div>
+    <div id='map' class='of'>My active places<button onclick="document.getElementById('map').style.display='none'">&times;</button><br/><img height='15px' width='15px' src='https://file.hqrcode.top/data/upload/file/20240504/b66b8c6d30339141e49c1e55d9767669.png'/><a href='https://www.turtlesim.com/tuc'>Turtle Universe</a><button onclick='i(0)'>i</button><br/><img height='15px' width='15px' src='https://forum.netlogo.org/uploads/default/original/1X/f5c861b91f41e19e6da1573ccd2f32a324b266b2.png'/><a href='http://forum.netlogo.org/'>Netlogo Forum</a><button onclick='i(1)'>i</button></div>
+    <div id='website' class='of'><a href='https://file.hqrcode.top/data/upload/file/20240308/9a5c7534d8c67c3005201249935f5d0b.html'>Primal number detector</a><br/><a href='https://file.hqrcode.top/data/upload/file/20240222/ac9ba863e1a72cc4d7b3320a6c10877e.html'>File reader</a><br/><a href='https://file.hqrcode.top/data/upload/file/20240201/407cd86f4e5f8e79d8e806a16ba19cec.html'>Javascript console</a><br/><a href='https://file.hqrcode.top/data/upload/file/20240325/2dfa29f5ca074a239dd68c839676a27f.html'>Multi-function calculator</a><br/><button onclick="document.getElementById('website').style.display='none'">Close</button></div>
+    <div id='ju' class="of"><strong>You need attention these rules:</strong><p>You must read at least 30s.</p>• Learn the js,css and html code if you want to join us.<br/>• Please active in our group.<br/>• You are welcome to ask questions.<br/>• You need type your verification code when you are ready to join us.The verification code will show after you click “OK”.<br/>• The button “OK” and “Cancel” will be show after you read 30s.<br/><p>More about ours</p>• When you are ready to join us,the system will ask you to answer a question.Please answer:<code style='background-color: #ddd'>Website: your verification code</code>.<br/>• We are developing some websites.<br/>• If you download the app "Turtle Universe",Please note your serial number as your name.If you solve a question,we can send you 50 gold coins.</div>
+    <div id='i'></div>
+     <br/>
+     <h1>Tiaotiao’s Page</h1>
+     <h4>Self-introduction:</h4>
+      <pre>  Name: tiaotiao
+  Age: 12
+  E-mail: 65841827@qq.com
+  Address: Henan Province
+  Learned code: html,css,js</pre>
+    <strong>This is the <select id='code'><option value='1'>js</option><option value='2'>html</option></select> runner:</strong><button onclick='run()' style='background-color: #4cf23a; border: 1px solid #ccc'>Run code</button>
+    <pre contenteditable='true' style='height: 300px;width: 1000px; overflow: auto; border: 1px solid #ccc' id='input'></pre>
+    <pre style='height:200px;width:700px;border: 1px solid #ccc; overflow: auto' id='output'></pre>
+    <script>
+       function website() {document.getElementById('website').style.display='block';};
+       function ap(){document.getElementById('map').style.display='block';};
+       function ju(){document.getElementById('ju').style.display='block';setTimeout(function(){document.getElementById('ju').innerHTML+='<br/><button onclick="ok()">OK!</button><button onclick="document.getElementById(\'ju\').style.display=\'none\'">cancel</button>';}, 30000);};
+      function i(ce){
+       if(ce==0){sw('* Chen, J. & Wilensky, U. (2021). Turtle Universe. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.')} else if(ce==1){sw('<img src="https://file.hqrcode.top/data/upload/file/20240507/a808fa413cfb93c74b501c1fa4dc0493.PNG"/>')};
+      }
+     function sw(v){document.getElementById('i').style.display='block';document.getElementById('i').innerHTML='<button onclick="document.getElementById(\'i\').style.display=\'none\'">&times;</button><br/>'+v;};
+    function ok(){document.getElementById('ju').style.display='none';var a=Math.floor(Math.random()*10),b=String((a**2)+13),c=(b.length==2)?b:'0'+b,d=(a+a**7+6*a)%10;sw('Your verification code:'+a+c+d);};
+    function run(){
+       var selectElement = document.getElementById('code');
+       var k = selectElement.options[selectElement.selectedIndex].value;
+       document.getElementById('output').innerHTML='';
+       if(k=='1'){
+         try{eval("const console={'log':function(ve){document.getElementById('output').innerHTML = document.getElementById('output').innerHTML+'&gt; '+ve+'<br/>'}};"+document.getElementById('input').innerText.replace(/\/\/.*?\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, ''));} catch(e){document.getElementById('output').innerText='Error:'+e.message};
+          }else{
+           document.getElementById('output').innerHTML=document.getElementById('input').innerText;
+        };
+          }
+   </script>
+</body>
+</html>
