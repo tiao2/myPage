@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>内置浏览器</title>
+    <style>
+     #se {
+        position: absolute;
+        height: 50%;
+        width: 50%;
+        top: 20%;
+        left: 25%;
+      }
+   #hd { position: absolute; background-color: #ddd; height: 10%; width: 100%; top: 0%; left: 0%; }
+    </style>
+</head>
+<body>
+    <div id='hd'><input id='se' type='search' placeholder='输入网址…'/></div>
+    <iframe src="" id='ser' frameborder='none' style='position:absolute;top:10%;left:0%;height:90%;width:100%;'></iframe>
+    <script>
+       document.getElementById("se").addEventListener('keydown',function(e){
+          if(e.key==="Enter"){
+             document.getElementById("ser").src=document.getElementById('se').value;
+      }
+  });
+   </script>
+</body>
+</html>
