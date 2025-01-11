@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Canvas</title>
+    <meta name = "viewport" content = "width = device-width, user-scalable = no">
+  </head>
+  <body>
+   <canvas id="canvas" ></canvas>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+    <script type="text/javascript" charset="utf-8">
+var canvas = document.getElementById("canvas");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+var touchable = 'createTouch' in document;
+if (touchable) {
+    canvas.addEventListener('touchstart', onTouchStart, false);
+    canvas.addEventListener('touchmove', onTouchMove, false);
+}
+else
+{
+      alert("touchable is false !");
+}
+var lastX;
+var lastY;
+var ctx =canvas.getContext("2d");
+ctx.lineWidth=10;
+ctx.strokeStyle="#000000";
+function onTouchStart(event) {
+    event.preventDefault();
+    lastX=event.touches[0].clientX;
+    lastY=event.touches[0].clientY;
+    drawRound(lastX,lastY);
+}
+
+function onTouchMove(event) {
+    try
+    {
+      event.preventDefault();
+      drawLine(lastX,lastY,event.touches[0].clientX,event.touches[0].clientY);
+      lastX=event.touches[0].clientX;
+      lastY=event.touches[0].clientY;
+    }
+    catch(err){
+        alert( err.description);
+    }
+}
+
+function drawRound(x,y)
+{
+    ctx.fillStyle="#000000";
+    ctx.beginPath();
+    ctx.arc(x,y,5,0,Math.PI*2,true);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function drawLine(startX,startY,endX,endY)
+{
+    ctx.beginPath();
+    ctx.lineCap="round";
+    ctx.moveTo(startX,startY);
+    ctx.lineTo(endX,endY);
+    ctx.stroke();
+}
+</script>
+</body>
+</html>
