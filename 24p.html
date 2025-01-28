@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>24点</title>
+   <style> body { background-color: #333; }
+      #keyboard { position: fixed; bottom: 0%; width: 100%; left: 0%; height: 60%; }
+      button { height: 16.667%; width: 33.333%; border: 0.5px solid black; border-radius: 0px; color: black; font-size: 20px; background-color: white; }
+     #math { color: white; position: fixed; top: 20%; left: 0%; width: 100%; text-align: left;  font-size: 35px; }
+     #answer { color: gray; position: fixed; top: 30%; left: 0%; text-align: left; font-size: 35px; }
+     #nums { color: white; position: fixed; top: 10%; left: 40%; text-align: left;  font-size: 35px; }
+    #buttons { color: orange; position: fixed; top: 0%; left: 0%; width: 100%; background-color: white; }
+   </style>
+</head>
+<body>
+    <div id='buttons'>用时:<code id='time'>0</code>s&nbsp;&nbsp;&nbsp;<label disabled='disabled' onclick='nt()'>下一题</label>&nbsp;&nbsp;&nbsp;<label onclick='fq()' disabled='disabled'>放弃</label>&nbsp;&nbsp;&nbsp;分数:<code id='fs'>0</code></div>
+    <div id='nums'></div><div id='math'></div><div id="answer"></div>
+    <div id='keyboard'><button onclick="tp('+')">+</button><button onclick="tp('-')">-</button><button onclick="tp('×')">&times;</button><button onclick="tp('÷')">&divide;</button><button onclick="tp('AC')">AC</button><button onclick="tp('Backspace')">⌫</button><button onclick="tp(1)">1</button><button onclick="tp(2)">2</button><button onclick="tp(3)">3</button><button onclick="tp(4)">4</button><button onclick="tp(5)">5</button><button onclick="tp(6)">6</button><button onclick="tp(7)">7</button><button onclick="tp(8)">8</button><button onclick="tp(9)">9</button><button onclick="tp('(')">(</button><button onclick="tp(0)">0</button><button onclick="tp(')')">)</button></div>
+    <script> var lst=[],te=0,js=true,fs=0,da='';
+         function tp(v){ var ans;
+          if(v=="AC"){document.getElementById("math").innerText=''; document.getElementById("answer").innerText='';} else if(v=="Backspace"){document.getElementById("math").innerText=document.getElementById("math").innerText.substring(0, document.getElementById("math").innerText.length-1); try { ans=eval(document.getElementById("math").innerText.replace(/[×]/g,'*').replace(/[÷]/g,'/')); if(ans!=undefined){document.getElementById("answer").innerText='='+ans; if(ans==24) yz();} else { document.getElementById("answer").innerText=''; }; if(ans==24) yz();} catch(e){ document.getElementById("answer").innerText=''; };} else { var a=document.getElementById("math").innerText;
+        if(v==')' && a.split("(").length<=a.split(')').length){void 0;} else {document.getElementById("math").innerText+=v;}
+         try { ans=eval(document.getElementById("math").innerText.replace(/[×]/g,'*').replace(/[÷]/g,'/')); if(ans!=undefined){document.getElementById("answer").innerText='='+ans; if(ans==24) yz();} else { document.getElementById("answer").innerText=''; };} catch(e){ document.getElementById("answer").innerText=''; }; 
+              };
+            }
+function generateSolvableNumbers() {
+    var numbers;
+    do {
+        numbers = Array.from({length: 4}, () => Math.floor(Math.random() * 9) + 1);
+    } while (!hasSolution(numbers));
+    return numbers;
+}
+function hasSolution(numbers) {
+    var epsilon = 1e-6;
+    function solve(nums) {
+        if (nums.length === 1) {
+            return Math.abs(nums[0] - 24) < epsilon;
+        }
+        for (let i = 0; i < nums.length; i++) {
+            for (let j = 0; j < nums.length; j++) {
+                if (i === j) continue;
+                var remaining = [];
+                for (let k = 0; k < nums.length; k++) {
+                    if (k !== i && k !== j) remaining.push(nums[k]);
+                }
+                var operations = [
+                    nums[i] + nums[j],
+                    nums[i] - nums[j],
+                    nums[j] - nums[i],
+                    nums[i] * nums[j],
+                ];
+                if (Math.abs(nums[j]) > epsilon) {
+                    operations.push(nums[i] / nums[j]);
+                }
+                if (Math.abs(nums[i]) > epsilon) {
+                    operations.push(nums[j] / nums[i]);
+                }
+                for (const result of operations) {
+                    if (solve([...remaining, result])) return true;
+                }
+            }
+        }
+        return false;
+    }
+    return solve(numbers);
+}
+
+      window.onload=()=>{document.getElementById('nums').innerHTML=generateSolvableNumbers().join("&nbsp;&nbsp;&nbsp;");};
+      setInterval(function(){
+   if(js){
+        te++;
+        document.getElementById("time").innerText=te;
+      };
+        },1000);
+     function fq(){js=false;}; function nt(){js=true;te=0; ol(); tp("AC");}
+    function yz() {
+    var cus = [], cw = 0;
+
+    for (var b = 0; b < document.getElementById("math").innerText.split(/[^0-9]/).length; b++) {
+        var n = document.getElementById("math").innerText.split(/[^0-9]/)[b];
+        if (n != '') cus.push(n);
+    }
+
+    for (var a = 0; a < cus.length; a++) {
+        var v = cus[a];
+        if (lst.join("").search(v) >= 0) {
+            cw++;
+        }
+    }
+
+    if (cw == 4) {
+        fs += 5;
+        fq();
+        setTimeout(() => {
+            document.getElementById("fs").innerText = fs;
+        }, 0);
+    }
+}
+function fq(){};
+function nt(){document.getElementById('nums').innerHTML=generateSolvableNumbers().join("&nbsp;&nbsp;&nbsp;");};
+    </script>
+</body>
+</html>
