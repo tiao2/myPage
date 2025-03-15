@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+</head>
+<body>
+    <script>
+      // 目标网页的代码（需确保可控制其内容）
+window.addEventListener('load', () => {
+    // 向打开它的父窗口（即本地HTML）发送消息
+    if (window.opener) {
+        // 发送初始化消息
+        window.opener.postMessage(
+            { type: 'greeting', data: 'Hello World!' },
+            '*' // 目标origin设为*（允许file://接收）
+        );
+    }
+
+    // 监听来自本地HTML的消息
+    window.addEventListener('message', (event) => {
+        // 安全验证：可限制仅接收file://的消息（但浏览器可能不暴露file://的origin）
+        if (event.data && event.data.reply) {
+            console.log('收到本地回复:', event.data.reply);
+        }
+    });
+});
+    </script>
+</body>
+</html>
