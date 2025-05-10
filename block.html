@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>可拖拽积木编程平台</title>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .toolbox {
+            width: 200px;
+            background: #f0f0f0;
+            padding: 20px;
+            border-right: 2px solid #ccc;
+        }
+
+        .workspace {
+            flex: 1;
+            position: relative;
+            background: #fff;
+            overflow: auto;
+        }
+
+        .block {
+            padding: 15px 20px;
+            margin: 10px;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            min-width: 160px;
+            text-align: center;
+            transition: transform 0.1s;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+
+        /* 顶部凸起 */
+        .block::before {
+            content: '';
+            top: -8px;
+            left: 15px;
+            right: 15px;
+            height: 16px;
+            background: inherit;
+            border-radius: 6px 6px 0 0;
+            z-index: 2;
+        }
+
+        /* 底部凹槽 */
+        .block::after {
+            content: '';
+            bottom: -8px;
+            left: 15px;
+            right: 15px;
+            height: 16px;
+            background: inherit;
+            border-radius: 0 0 6px 6px;
+            box-shadow: inset 0 -2px 3px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+
+        .event { background: #FFD700; }
+        .control { background: #90EE90; }
+        .action { background: #87CEEB; }
+
+        .block.dragging {
+            opacity: 0.9;
+            transform: scale(1.05);
+            z-index: 1000;
+            filter: brightness(1.1);
+        }
+
+        .code-output {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 150px;
+            background: #1e1e1e;
+            color: #fff;
+            padding: 15px;
+            font-family: monospace;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="toolbox">
+            <div class="block event">当开始被点击</div>
+            <div class="block control">重复执行</div>
+            <div class="block action">移动10步</div>
+        </div>
+        <div class="workspace" id="workspace"></div>
+        <div class="code-output" id="codeOutput"></div>
+    </div>
+
+    <script>
+        class BlocklyApp {
+            constructor() {
+                this.dragging = false;
+                this.currentBlock = null;
+                this.cloneBlock = null;
+                this.offset = { x: 0, y: 0 };
+                this.workspace = document.getElementById('workspace');
+                
+                this.initEvents();
+            }
+
+            initEvents() {
+                // 初始化工具箱拖拽
+                document.querySelector('.toolbox').addEventListener('mousedown', e => {
+                    if (e.target.classList.contains('block')) {
+                        this.startDragging(e.target, e);
+                    }
+                });
+
+                // 工作区拖拽
+                document.getElementById('workspace').addEventListener('mousedown', e => {
+                    if (e.target.classList.contains('block')) {
+                        this.startDragging(e.target, e);
+                    }
+                });
+
+                document.addEventListener('mousemove', e => this.handleMove(e));
+                document.addEventListener('mouseup', e => this.handleUp(e));
+            }
+
+            startDragging(block, e) {
+                this.dragging = true;
+                this.currentBlock = block;
+                
+                // 创建克隆体
+                this.cloneBlock = block.cloneNode(true);
+                this.cloneBlock.classList.add('dragging');
+                
+                // 计算初始偏移
+                const rect = block.getBoundingClientRect();
+                this.offset.x = e.clientX - rect.left;
+                this.offset.y = e.clientY - rect.top;
+                
+                // 设置克隆体样式
+                this.cloneBlock.style.position = 'fixed';
+                this.cloneBlock.style.left = `${rect.left}px`;
+                this.cloneBlock.style.top = `${rect.top}px`;
+                document.body.appendChild(this.cloneBlock);
+                
+                // 隐藏原始块（仅工具箱中的块）
+                if (block.parentElement.classList.contains('toolbox')) {
+                    block.style.visibility = 'hidden';
+                }
+            }
+
+            handleMove(e) {
+                if (!this.dragging) return;
+                
+                // 更新克隆体位置
+                this.cloneBlock.style.left = `${e.clientX - this.offset.x}px`;
+                this.cloneBlock.style.top = `${e.clientY - this.offset.y}px`;
+            }
+
+            handleUp(e) {
+                if (!this.dragging) return;
+                
+                // 在工作区释放
+                if (e.target.closest('#workspace')) {
+                    const workspaceRect = this.workspace.getBoundingClientRect();
+                    const x = e.clientX - workspaceRect.left - this.offset.x;
+                    const y = e.clientY - workspaceRect.top - this.offset.y;
+                    
+                    const newBlock = this.currentBlock.cloneNode(true);
+                    newBlock.style.position = 'absolute';
+                    newBlock.style.left = `${x}px`;
+                    newBlock.style.top = `${y}px`;
+                    newBlock.style.transform = 'none';
+                    this.workspace.appendChild(newBlock);
+                }
+
+                // 清理
+                this.cloneBlock.remove();
+                if (this.currentBlock.parentElement.classList.contains('toolbox')) {
+                    this.currentBlock.style.visibility = 'visible';
+                }
+                
+                this.dragging = false;
+                this.currentBlock = null;
+                this.cloneBlock = null;
+                this.generateCode();
+            }
+
+            generateCode() {
+                const blocks = [...document.querySelectorAll('#workspace .block')];
+                let code = '';
+                let indent = 0;
+                
+                blocks.forEach(block => {
+                    const text = block.textContent.trim();
+                    switch(true) {
+                        case text.includes('当开始'):
+                            code += 'function start() {\n';
+                            indent += 2;
+                            break;
+                        case text.includes('重复'):
+                            code += ' '.repeat(indent) + 'while(true) {\n';
+                            indent += 2;
+                            break;
+                        case text.includes('移动'):
+                            code += ' '.repeat(indent) + 'move(10);\n';
+                            break;
+                    }
+                });
+                
+                // 闭合代码块
+                while(indent > 0) {
+                    indent -= 2;
+                    code += ' '.repeat(indent) + '}\n';
+                }
+                
+                document.getElementById('codeOutput').textContent = code;
+            }
+        }
+
+        // 初始化应用
+        new BlocklyApp();
+    </script>
+</body>
+</html>
