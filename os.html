@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>振荡器</title>
+    <style>
+      input,select { 
+         border:none;
+         background-color: #eee;
+      }
+     input { width: 90%; }
+     select { width: 95%; color: black; font-size: 16px; }
+      input,select:focus { 
+        border-color: rgba(0,0,0,0);
+        outline: none;
+        box-shadow: 0 0 0.1px rgba(255,255,255,0);
+     }
+    #tb {
+     position: absolute;
+     top: 0%;
+     left: 0%;
+     height: 150px;
+     width: 100%;
+     background-color: #eee;
+     line-height: 30px;
+    }
+    button {
+     position: absolute;
+     top: 160px;
+     left: 0%;
+     height: 30px;
+     width: 100%;
+     font-size: 16px;
+     color: black;
+     background-color: #eee;
+   }
+    </style>
+</head>
+<body>
+<div id='tb'>
+    音调:<input type='range' min='20' max='20000' value='440' id='yd'/><code id='1'>440</code>Hz<br/>
+    音量:<input type='range' min='0' max='100' value='100' id='xd'/><code id='2'>100</code>%<br/>
+    波型:<select id='bx'><option value='sine'>正弦波</option><option value='square'>方波</option><option value='sawtooth'>锯齿波</option><option value='triangle'>三角波</option></select><br/>
+    震荡时长:<input placeholder='输入数字…' id='sc'/>ms
+</div>
+<button onclick='zd()'>震荡</button>
+<script>
+   var yd=document.getElementById('yd'),xd=document.getElementById('xd'),ydl=document.getElementById('1'),xdl=document.getElementById('2');
+   yd.addEventListener('input', function(){ydl.innerText=yd.value});
+   xd.addEventListener('input', function(){xdl.innerText=xd.value});
+function zd(){
+     var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+     var oscillator = audioContext.createOscillator();
+     var se=document.getElementById('bx');
+     oscillator.type = se.options[se.selectedIndex].value;
+     oscillator.frequency.setValueAtTime(document.getElementById('yd').value, audioContext.currentTime); // 设置频率为440Hz（A4）
+     var gainNode = audioContext.createGain();
+     gainNode.gain.setValueAtTime(((document.getElementById('xd').value)/100), audioContext.currentTime); // 设置音量，范围是0到1
+     oscillator.connect(gainNode);
+     gainNode.connect(audioContext.destination);
+     oscillator.start(); // 开始播放声音
+     setTimeout(() => {
+         oscillator.stop(); // 1秒后停止播放声音
+     }, document.getElementById('sc')); // 1000毫秒后停止播放
+};
+</script>
+</body>
+</html>
