@@ -1,69 +1,119 @@
 <!DOCTYPE html>
-
 <html>
 <head>
     <meta charset="utf-8">
     <title>振荡器</title>
     <style>
-      input,select { 
-         border:none;
-         background-color: #eee;
-      }
-     input { width: 90%; }
-     select { width: 95%; color: black; font-size: 16px; }
-      input,select:focus { 
-        border-color: rgba(0,0,0,0);
-        outline: none;
-        box-shadow: 0 0 0.1px rgba(255,255,255,0);
-     }
-    #tb {
-     position: absolute;
-     top: 0%;
-     left: 0%;
-     height: 150px;
-     width: 100%;
-     background-color: #eee;
-     line-height: 30px;
-    }
-    button {
-     position: absolute;
-     top: 160px;
-     left: 0%;
-     height: 30px;
-     width: 100%;
-     font-size: 16px;
-     color: black;
-     background-color: #eee;
-   }
+        /* 保持原有改进的CSS样式 */
+        body { margin: 0; padding: 20px; font-family: Arial; background: #f5f5f5; }
+        #tb { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .control-group { margin-bottom: 15px; }
+        input[type="range"] { width: 100%; height: 4px; background: #ddd; border-radius: 2px; -webkit-appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: #2196F3; border-radius: 50%; }
+        select, input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        code { min-width: 60px; text-align: right; color: #2196F3; }
+        button { width: 100%; padding: 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #1976D2; }
+        .label { display: inline-block; width: 80px; color: #666; }
     </style>
 </head>
 <body>
 <div id='tb'>
-    音调:<input type='range' min='20' max='20000' value='440' id='yd'/><code id='1'>440</code>Hz<br/>
-    音量:<input type='range' min='0' max='100' value='100' id='xd'/><code id='2'>100</code>%<br/>
-    波型:<select id='bx'><option value='sine'>正弦波</option><option value='square'>方波</option><option value='sawtooth'>锯齿波</option><option value='triangle'>三角波</option></select><br/>
-    震荡时长:<input placeholder='输入数字…' id='sc'/>ms
+    <div class="control-group">
+        <span class="label">音调:</span>
+        <input type='range' min='20' max='20000' value='440' id='yd'/>
+        <code id='1'>440</code>Hz
+    </div>
+    <div class="control-group">
+        <span class="label">音量:</span>
+        <input type='range' min='0' max='100' value='100' id='xd'/>
+        <code id='2'>100</code>%
+    </div>
+    <div class="control-group">
+        <span class="label">波型:</span>
+        <select id='bx'>
+            <option value='sine'>正弦波</option>
+            <option value='square'>方波</option>
+            <option value='sawtooth'>锯齿波</option>
+            <option value='triangle'>三角波</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <span class="label">时长:</span>
+        <input type='number' min='1' value="1000" id='sc' placeholder='毫秒'/>
+    </div>
 </div>
-<button onclick='zd()'>震荡</button>
+<button onclick='zd()'>播放声音</button>
 <script>
-   var yd=document.getElementById('yd'),xd=document.getElementById('xd'),ydl=document.getElementById('1'),xdl=document.getElementById('2');
-   yd.addEventListener('input', function(){ydl.innerText=yd.value});
-   xd.addEventListener('input', function(){xdl.innerText=xd.value});
-function zd(){
-     var audioContext = new (window.AudioContext || window.webkitAudioContext)();
-     var oscillator = audioContext.createOscillator();
-     var se=document.getElementById('bx');
-     oscillator.type = se.options[se.selectedIndex].value;
-     oscillator.frequency.setValueAtTime(document.getElementById('yd').value, audioContext.currentTime); // 设置频率为440Hz（A4）
-     var gainNode = audioContext.createGain();
-     gainNode.gain.setValueAtTime(((document.getElementById('xd').value)/100), audioContext.currentTime); // 设置音量，范围是0到1
-     oscillator.connect(gainNode);
-     gainNode.connect(audioContext.destination);
-     oscillator.start(); // 开始播放声音
-     setTimeout(() => {
-         oscillator.stop(); // 1秒后停止播放声音
-     }, document.getElementById('sc')); // 1000毫秒后停止播放
-};
+    let audioContext = null;
+    let currentOscillator = null;
+
+    // 初始化音频上下文（兼容移动端）
+    function initAudioContext() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // 绑定控件更新
+    document.getElementById('yd').addEventListener('input', e => {
+        document.getElementById('1').textContent = e.target.value;
+    });
+    document.getElementById('xd').addEventListener('input', e => {
+        document.getElementById('2').textContent = e.target.value;
+    });
+
+    async function zd() {
+        try {
+            initAudioContext();
+            
+            // 强制恢复上下文（针对iOS）
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+
+            // 停止之前的振荡器
+            if (currentOscillator) {
+                currentOscillator.stop();
+                currentOscillator.disconnect();
+            }
+
+            // 创建新节点
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // 配置参数
+            oscillator.type = document.getElementById('bx').value;
+            oscillator.frequency.setValueAtTime(
+                parseFloat(document.getElementById('yd').value),
+                audioContext.currentTime
+            );
+            
+            gainNode.gain.setValueAtTime(
+                parseFloat(document.getElementById('xd').value) / 100,
+                audioContext.currentTime
+            );
+
+            // 连接节点
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // 启动并记录实例
+            oscillator.start();
+            currentOscillator = oscillator;
+
+            // 自动停止
+            const duration = Math.max(50, parseInt(document.getElementById('sc').value));
+            setTimeout(() => {
+                oscillator.stop();
+                gainNode.disconnect();
+            }, duration);
+            
+        } catch (error) {
+            console.error('播放错误:', error);
+            alert('无法播放声音，请检查浏览器支持！');
+        }
+    }
 </script>
 </body>
 </html>
