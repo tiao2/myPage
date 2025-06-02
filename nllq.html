@@ -402,7 +402,10 @@
     <div class="browser-container">
         <!-- 标签栏 -->
         <div class="tab-bar" id="tabBar">
-            <!-- 标签将通过JS动态生成 -->
+            <!-- 新建标签页按钮 -->
+            <button class="new-tab-btn" id="newTab">
+                <i class="fas fa-plus"></i>
+            </button>
         </div>
         
         <!-- 工具栏 -->
@@ -474,8 +477,6 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- iframe容器将通过JS动态生成 -->
         </div>
         
         <!-- 状态栏 -->
@@ -500,6 +501,7 @@
             const backBtn = document.getElementById('backBtn');
             const forwardBtn = document.getElementById('forwardBtn');
             const refreshBtn = document.getElementById('refreshBtn');
+            const newTabBtn = document.getElementById('newTab');
             const bookmarksBar = document.getElementById('bookmarksBar');
             const newTabScreen = document.getElementById('newTabScreen');
             const statusText = document.getElementById('statusText');
@@ -555,6 +557,11 @@
                         navigateToUrl(url);
                     });
                 });
+                
+                // 新建标签页按钮事件
+                newTabBtn.addEventListener('click', function() {
+                    createNewTab();
+                });
             }
             
             // 创建新标签页
@@ -583,7 +590,8 @@
                     closeTab(tabId);
                 });
                 
-                tabBar.appendChild(tabElement);
+                // 将新标签添加到新建按钮之前
+                tabBar.insertBefore(tabElement, newTabBtn);
                 
                 // 创建iframe
                 const iframeContainer = document.createElement('div');
@@ -787,11 +795,6 @@
                     return false;
                 }
             }
-            
-            // 新标签按钮事件
-            document.getElementById('newTab').addEventListener('click', function() {
-                createNewTab();
-            });
         });
     </script>
 </body>
