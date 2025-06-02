@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP浏览器 - 多标签页</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e6e6e6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .browser-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
+            background: #0f172a;
+            overflow: hidden;
+        }
+        
+        /* 标签栏样式 */
+        .tab-bar {
+            display: flex;
+            background: #1e293b;
+            padding: 8px 8px 0;
+            border-bottom: 1px solid #334155;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        
+        .tab {
+            display: flex;
+            align-items: center;
+            background: #334155;
+            color: #cbd5e1;
+            padding: 8px 15px;
+            margin-right: 4px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            min-width: 180px;
+            max-width: 250px;
+            transition: all 0.2s;
+            position: relative;
+            font-size: 14px;
+        }
+        
+        .tab.active {
+            background: #0f172a;
+            color: #f8fafc;
+            border-bottom: 3px solid #60a5fa;
+        }
+        
+        .tab-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 10px;
+        }
+        
+        .tab-close {
+            color: #94a3b8;
+            padding: 2px;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .tab-close:hover {
+            background: #64748b;
+            color: #fff;
+        }
+        
+        .new-tab-btn {
+            background: #1e293b;
+            color: #94a3b8;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: all 0.2s;
+        }
+        
+        .new-tab-btn:hover {
+            background: #334155;
+            color: #fff;
+        }
+        
+        /* 工具栏样式 */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .nav-btn {
+            background: #334155;
+            color: #cbd5e1;
+            border: none;
+            border-radius: 4px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: all 0.2s;
+        }
+        
+        .nav-btn:hover {
+            background: #475569;
+            color: #fff;
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .url-container {
+            flex: 1;
+            display: flex;
+            background: #334155;
+            border-radius: 24px;
+            padding: 4px 8px 4px 16px;
+            margin: 0 12px;
+            border: 1px solid #475569;
+            transition: all 0.3s;
+        }
+        
+        .url-container:focus-within {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+        }
+        
+        .url-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #f8fafc;
+            font-size: 14px;
+            padding: 8px 0;
+            outline: none;
+        }
+        
+        .go-btn {
+            background: #60a5fa;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 6px 16px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .go-btn:hover {
+            background: #3b82f6;
+        }
+        
+        /* 书签栏样式 */
+        .bookmarks-bar {
+            display: flex;
+            padding: 8px 12px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        
+        .bookmark {
+            display: flex;
+            align-items: center;
+            background: #334155;
+            color: #cbd5e1;
+            padding: 6px 12px;
+            margin-right: 8px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .bookmark i {
+            margin-right: 6px;
+            font-size: 12px;
+        }
+        
+        .bookmark:hover {
+            background: #475569;
+            color: #fff;
+        }
+        
+        /* 内容区域样式 */
+        .content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .iframe-container {
+            flex: 1;
+            display: none;
+            position: relative;
+        }
+        
+        .iframe-container.active {
+            display: block;
+        }
+        
+        .browser-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+        
+        .new-tab-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+            z-index: 10;
+        }
+        
+        .new-tab-screen.hidden {
+            display: none;
+        }
+        
+        .logo {
+            font-size: 48px;
+            color: #60a5fa;
+            margin-bottom: 24px;
+        }
+        
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #f8fafc;
+        }
+        
+        .welcome-subtitle {
+            font-size: 18px;
+            color: #94a3b8;
+            margin-bottom: 32px;
+            max-width: 600px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+        
+        .quick-link {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #334155;
+        }
+        
+        .quick-link:hover {
+            background: rgba(51, 65, 85, 0.7);
+            transform: translateY(-5px);
+        }
+        
+        .quick-link i {
+            font-size: 32px;
+            color: #60a5fa;
+            margin-bottom: 12px;
+        }
+        
+        .quick-link .title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #f8fafc;
+        }
+        
+        .quick-link .url {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        /* 状态栏样式 */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 13px;
+            border-top: 1px solid #334155;
+        }
+        
+        .status-text {
+            flex: 1;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .quick-links {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tab {
+                min-width: 140px;
+            }
+            
+            .toolbar {
+                padding: 8px;
+            }
+            
+            .nav-btn {
+                margin-right: 4px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .quick-links {
+                grid-template-columns: 1fr;
+            }
+            
+            .tab {
+                min-width: 120px;
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            
+            .url-container {
+                margin: 0 6px;
+                padding: 4px 8px 4px 12px;
+            }
+            
+            .go-btn {
+                padding: 6px 12px;
+            }
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="browser-container">
+        <!-- 标签栏 -->
+        <div class="tab-bar" id="tabBar">
+            <!-- 标签将通过JS动态生成 -->
+        </div>
+        
+        <!-- 工具栏 -->
+        <div class="toolbar">
+            <button class="nav-btn" id="backBtn" title="后退"><i class="fas fa-arrow-left"></i></button>
+            <button class="nav-btn" id="forwardBtn" title="前进"><i class="fas fa-arrow-right"></i></button>
+            <button class="nav-btn" id="refreshBtn" title="刷新"><i class="fas fa-sync-alt"></i></button>
+            
+            <div class="url-container">
+                <input type="text" class="url-input" id="urlInput" placeholder="输入网址或搜索内容" autocomplete="off">
+                <button class="go-btn" id="goBtn">前往</button>
+            </div>
+            
+            <button class="nav-btn" id="bookmarksBtn" title="书签"><i class="fas fa-bookmark"></i></button>
+            <button class="nav-btn" id="settingsBtn" title="设置"><i class="fas fa-cog"></i></button>
+        </div>
+        
+        <!-- 书签栏 -->
+        <div class="bookmarks-bar" id="bookmarksBar">
+            <div class="bookmark" data-url="https://www.google.com">
+                <i class="fab fa-google"></i> Google
+            </div>
+            <div class="bookmark" data-url="https://github.com">
+                <i class="fab fa-github"></i> GitHub
+            </div>
+            <div class="bookmark" data-url="https://stackoverflow.com">
+                <i class="fab fa-stack-overflow"></i> Stack Overflow
+            </div>
+            <div class="bookmark" data-url="https://www.youtube.com">
+                <i class="fab fa-youtube"></i> YouTube
+            </div>
+            <div class="bookmark" data-url="https://www.wikipedia.org">
+                <i class="fab fa-wikipedia-w"></i> Wikipedia
+            </div>
+            <div class="bookmark" data-url="https://www.amazon.com">
+                <i class="fab fa-amazon"></i> Amazon
+            </div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="content-area" id="contentArea">
+            <div class="new-tab-screen" id="newTabScreen">
+                <div class="logo">
+                    <i class="fas fa-globe-americas"></i>
+                </div>
+                <h1 class="welcome-title">PHP浏览器</h1>
+                <p class="welcome-subtitle">安全、快速的多标签页浏览器体验。在下方输入网址或从书签中选择一个网站开始浏览。</p>
+                
+                <div class="quick-links">
+                    <div class="quick-link" data-url="https://www.google.com">
+                        <i class="fab fa-google"></i>
+                        <div class="title">Google</div>
+                        <div class="url">www.google.com</div>
+                    </div>
+                    <div class="quick-link" data-url="https://github.com">
+                        <i class="fab fa-github"></i>
+                        <div class="title">GitHub</div>
+                        <div class="url">github.com</div>
+                    </div>
+                    <div class="quick-link" data-url="https://stackoverflow.com">
+                        <i class="fab fa-stack-overflow"></i>
+                        <div class="title">Stack Overflow</div>
+                        <div class="url">stackoverflow.com</div>
+                    </div>
+                    <div class="quick-link" data-url="https://www.youtube.com">
+                        <i class="fab fa-youtube"></i>
+                        <div class="title">YouTube</div>
+                        <div class="url">youtube.com</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- iframe容器将通过JS动态生成 -->
+        </div>
+        
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="status-text" id="statusText">准备就绪</div>
+            <div id="securityIndicator"><i class="fas fa-lock"></i> 安全连接</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 浏览器状态
+            let tabs = [];
+            let currentTabId = null;
+            let tabCounter = 1;
+            
+            // DOM元素
+            const tabBar = document.getElementById('tabBar');
+            const contentArea = document.getElementById('contentArea');
+            const urlInput = document.getElementById('urlInput');
+            const goBtn = document.getElementById('goBtn');
+            const backBtn = document.getElementById('backBtn');
+            const forwardBtn = document.getElementById('forwardBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const bookmarksBar = document.getElementById('bookmarksBar');
+            const newTabScreen = document.getElementById('newTabScreen');
+            const statusText = document.getElementById('statusText');
+            
+            // 初始化浏览器
+            initBrowser();
+            
+            function initBrowser() {
+                // 创建第一个标签页
+                createNewTab();
+                
+                // 事件监听
+                goBtn.addEventListener('click', navigateToUrl);
+                urlInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') navigateToUrl();
+                });
+                
+                backBtn.addEventListener('click', function() {
+                    if (currentTabId) {
+                        const tab = getTabById(currentTabId);
+                        if (tab.iframe.contentWindow.history.length > 1) {
+                            tab.iframe.contentWindow.history.back();
+                        }
+                    }
+                });
+                
+                forwardBtn.addEventListener('click', function() {
+                    if (currentTabId) {
+                        const tab = getTabById(currentTabId);
+                        tab.iframe.contentWindow.history.forward();
+                    }
+                });
+                
+                refreshBtn.addEventListener('click', function() {
+                    if (currentTabId) {
+                        const tab = getTabById(currentTabId);
+                        tab.iframe.contentWindow.location.reload();
+                    }
+                });
+                
+                // 书签点击事件
+                bookmarksBar.querySelectorAll('.bookmark').forEach(bookmark => {
+                    bookmark.addEventListener('click', function() {
+                        const url = this.getAttribute('data-url');
+                        navigateToUrl(url);
+                    });
+                });
+                
+                // 快速链接事件
+                document.querySelectorAll('.quick-link').forEach(link => {
+                    link.addEventListener('click', function() {
+                        const url = this.getAttribute('data-url');
+                        navigateToUrl(url);
+                    });
+                });
+            }
+            
+            // 创建新标签页
+            function createNewTab(url = '') {
+                const tabId = `tab-${tabCounter++}`;
+                
+                // 创建标签元素
+                const tabElement = document.createElement('div');
+                tabElement.className = 'tab active';
+                tabElement.dataset.tabId = tabId;
+                tabElement.innerHTML = `
+                    <div class="tab-title">新标签页</div>
+                    <div class="tab-close"><i class="fas fa-times"></i></div>
+                `;
+                
+                // 标签点击事件
+                tabElement.addEventListener('click', function(e) {
+                    if (!e.target.closest('.tab-close')) {
+                        switchTab(tabId);
+                    }
+                });
+                
+                // 关闭按钮事件
+                tabElement.querySelector('.tab-close').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeTab(tabId);
+                });
+                
+                tabBar.appendChild(tabElement);
+                
+                // 创建iframe
+                const iframeContainer = document.createElement('div');
+                iframeContainer.className = 'iframe-container active';
+                iframeContainer.id = `container-${tabId}`;
+                
+                const iframe = document.createElement('iframe');
+                iframe.className = 'browser-iframe';
+                iframe.id = `iframe-${tabId}`;
+                
+                iframeContainer.appendChild(iframe);
+                contentArea.appendChild(iframeContainer);
+                
+                // 添加标签到状态
+                const newTab = {
+                    id: tabId,
+                    element: tabElement,
+                    container: iframeContainer,
+                    iframe: iframe,
+                    url: url,
+                    title: '新标签页'
+                };
+                
+                tabs.push(newTab);
+                currentTabId = tabId;
+                
+                // 隐藏新标签页欢迎屏幕
+                newTabScreen.classList.add('hidden');
+                
+                // 如果需要，加载URL
+                if (url) {
+                    loadUrlInTab(url, newTab);
+                }
+                
+                // 更新标签栏滚动位置
+                tabBar.scrollLeft = tabBar.scrollWidth;
+                
+                return newTab;
+            }
+            
+            // 切换标签页
+            function switchTab(tabId) {
+                if (currentTabId === tabId) return;
+                
+                // 更新当前标签状态
+                const currentTab = getTabById(currentTabId);
+                if (currentTab) {
+                    currentTab.element.classList.remove('active');
+                    currentTab.container.classList.remove('active');
+                }
+                
+                // 激活新标签
+                const newTab = getTabById(tabId);
+                if (newTab) {
+                    newTab.element.classList.add('active');
+                    newTab.container.classList.add('active');
+                    currentTabId = tabId;
+                    
+                    // 更新地址栏
+                    urlInput.value = newTab.url || '';
+                    
+                    // 更新导航按钮状态
+                    updateNavButtons();
+                    
+                    // 隐藏新标签页欢迎屏幕
+                    newTabScreen.classList.add('hidden');
+                }
+            }
+            
+            // 关闭标签页
+            function closeTab(tabId) {
+                const tabIndex = tabs.findIndex(tab => tab.id === tabId);
+                if (tabIndex === -1) return;
+                
+                const tab = tabs[tabIndex];
+                
+                // 移除元素
+                tab.element.remove();
+                tab.container.remove();
+                
+                // 从状态中移除
+                tabs.splice(tabIndex, 1);
+                
+                // 如果没有标签页了，显示新标签页欢迎屏幕
+                if (tabs.length === 0) {
+                    newTabScreen.classList.remove('hidden');
+                    currentTabId = null;
+                    return;
+                }
+                
+                // 如果关闭的是当前标签页，切换到相邻标签页
+                if (currentTabId === tabId) {
+                    // 尝试切换到右侧标签页，如果没有则切换到左侧
+                    const nextTab = tabs[tabIndex] || tabs[tabIndex - 1];
+                    if (nextTab) {
+                        switchTab(nextTab.id);
+                    }
+                }
+            }
+            
+            // 导航到URL
+            function navigateToUrl(url) {
+                // 如果传入的是事件，则从输入框获取URL
+                if (typeof url === 'object' || !url) {
+                    url = urlInput.value.trim();
+                }
+                
+                // 添加协议前缀（如果缺失）
+                if (url && !/^https?:\/\//i.test(url)) {
+                    url = 'https://' + url;
+                }
+                
+                // 如果URL无效，显示错误
+                if (!isValidUrl(url)) {
+                    statusText.textContent = '无效的URL';
+                    setTimeout(() => statusText.textContent = '准备就绪', 2000);
+                    return;
+                }
+                
+                // 更新状态
+                statusText.textContent = '正在加载...';
+                
+                if (currentTabId) {
+                    // 在当前标签页加载URL
+                    const currentTab = getTabById(currentTabId);
+                    loadUrlInTab(url, currentTab);
+                } else {
+                    // 创建新标签页并加载URL
+                    createNewTab(url);
+                }
+            }
+            
+            // 在标签页中加载URL
+            function loadUrlInTab(url, tab) {
+                try {
+                    tab.iframe.src = url;
+                    tab.url = url;
+                    
+                    // 监听加载完成事件
+                    tab.iframe.onload = function() {
+                        try {
+                            // 尝试获取页面标题
+                            const title = tab.iframe.contentDocument.title || new URL(url).hostname;
+                            tab.title = title;
+                            tab.element.querySelector('.tab-title').textContent = title;
+                        } catch (e) {
+                            // 跨域限制，无法获取标题
+                            const hostname = new URL(url).hostname;
+                            tab.title = hostname;
+                            tab.element.querySelector('.tab-title').textContent = hostname;
+                        }
+                        
+                        statusText.textContent = '完成';
+                        setTimeout(() => statusText.textContent = '准备就绪', 2000);
+                    };
+                    
+                    // 监听加载错误
+                    tab.iframe.onerror = function() {
+                        statusText.textContent = '加载页面时出错';
+                        setTimeout(() => statusText.textContent = '准备就绪', 3000);
+                    };
+                    
+                    // 更新地址栏
+                    urlInput.value = url;
+                } catch (error) {
+                    console.error('加载URL时出错:', error);
+                    statusText.textContent = '加载页面时出错';
+                    setTimeout(() => statusText.textContent = '准备就绪', 3000);
+                }
+            }
+            
+            // 更新导航按钮状态
+            function updateNavButtons() {
+                if (!currentTabId) {
+                    backBtn.disabled = true;
+                    forwardBtn.disabled = true;
+                    return;
+                }
+                
+                const tab = getTabById(currentTabId);
+                try {
+                    backBtn.disabled = tab.iframe.contentWindow.history.length <= 1;
+                    forwardBtn.disabled = true; // 简化实现，实际应跟踪历史记录位置
+                } catch (e) {
+                    // 跨域限制
+                    backBtn.disabled = true;
+                    forwardBtn.disabled = true;
+                }
+            }
+            
+            // 辅助函数
+            function getTabById(tabId) {
+                return tabs.find(tab => tab.id === tabId);
+            }
+            
+            function isValidUrl(url) {
+                try {
+                    new URL(url);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+            
+            // 新标签按钮事件
+            document.getElementById('newTab').addEventListener('click', function() {
+                createNewTab();
+            });
+        });
+    </script>
+</body>
+</html>
